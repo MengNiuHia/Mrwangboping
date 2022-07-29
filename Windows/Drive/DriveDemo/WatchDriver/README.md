@@ -9,7 +9,9 @@
 Windows10 vs2017 SDK版本：10.0.17763.132 WDK版本：10.0.17763.1
 
 ## 问题记录
-1.使用KmdManager安装并启动驱动时，安装驱动失败，启动失败，错误提示：Error number not found 解决方法：这是因为win10驱动签名必须通过微软认证，可以关闭win10驱动验签即可，如何关闭请百度，如有问题请留言。  2.DbgView未输出DbgPrint或KdPrint日志 解决方法：右键管理员权限启动DbgView，选择Capture菜单中Capture Kernel菜单项,捕获内核程序调试信息。(Capture Win32菜单项,捕获用户程序调试信息); 如果勾选不成功，重命名一下Dbgv.sys，在重新勾选即可。
+1.使用KmdManager安装并启动驱动时，安装驱动失败，启动失败，错误提示：Error number not found 解决方法：这是因为win10驱动签名必须通过微软认证，可以关闭win10驱动验签即可，如何关闭请百度，如有问题请留言。  
+
+2.DbgView未输出DbgPrint或KdPrint日志 解决方法：右键管理员权限启动DbgView，选择Capture菜单中Capture Kernel菜单项,捕获内核程序调试信息。(Capture Win32菜单项,捕获用户程序调试信息); 如果勾选不成功，重命名一下Dbgv.sys，在重新勾选即可。
 
 ## 关键函数
 PsSetLoadImageNotify例程注册驱动程序提供的回调，随后在加载（或映射到内存）图像（例如，DLL 或 EXE）时通知该回调。
