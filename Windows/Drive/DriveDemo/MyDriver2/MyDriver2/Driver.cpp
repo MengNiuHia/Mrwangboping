@@ -1,5 +1,9 @@
 #include "Driver.hpp"
 
+
+HANDLE g_ProcessId = NULL;
+
+
 //直接返回完成信息	
 NTSTATUS DispatchCreateClose(PDEVICE_OBJECT pDevObj, PIRP pIrp)
 {
@@ -95,6 +99,38 @@ NTSTATUS DenyLoadDriver(PVOID pImageBase)
 	return status;
 }
 
+
+// 拒绝加载 DLL 模块
+BOOLEAN DenyLoadDll(PVOID pLoadImageBase)
+{
+	// DLL拒绝加载, 不能类似驱动那样直接在入口点返回拒绝加载信息. 这样达不到卸载DLL的效果.
+	// 将文件头 前0x200 字节数据置零
+
+	ULONG ulDataSize = 0x200;
+	// 创建 MDL 方式修改内存
+	PMDL pMdl = MmCreateMdl(NULL, pLoadImageBase, ulDataSize);
+	if (NULL == pMdl)
+	{
+		DbgPrint("MmCreateMdl");
+		return FALSE;
+	}
+	MmBuildMdlForNonPagedPool(pMdl);
+	PVOID pVoid = MmMapLockedPages(pMdl, KernelMode);
+	if (NULL == pVoid)
+	{
+		IoFreeMdl(pMdl);
+		DbgPrint("MmMapLockedPages");
+		return FALSE;
+	}
+	// 置零
+	RtlZeroMemory(pVoid, ulDataSize);
+	// 释放 MDL
+	MmUnmapLockedPages(pVoid, pMdl);
+	IoFreeMdl(pMdl);
+
+	return TRUE;
+}
+
 // 回调函数
 VOID LoadImageNotifyRoutine(_In_ PUNICODE_STRING FullImageName, _In_ HANDLE ProcessId, _In_ PIMAGE_INFO ImageInfo)
 {
@@ -115,8 +151,23 @@ VOID LoadImageNotifyRoutine(_In_ PUNICODE_STRING FullImageName, _In_ HANDLE Proc
 		else
 		{
 			DbgPrint("Deny Load DLL\n");
-			//DenyLoadDll(ImageInfo->ImageBase);
+			DenyLoadDll(ImageInfo->ImageBase);
 		}
+	}
+
+	//拒绝Everything.exe加载dll
+	if (NULL != wcsstr(FullImageName->Buffer, L"Everything.exe"))
+	{
+		DbgPrint("发现Everything进程 进程id = %d\n", ProcessId);
+		//保存一下进程ID
+		g_ProcessId = ProcessId;
+	}
+
+	//禁止该进程ID加载dll
+	if (g_ProcessId == ProcessId && NULL != wcsstr(FullImageName->Buffer, L".dll"))
+	{
+		DbgPrint("Deny Load DLL\n");
+		DenyLoadDll(ImageInfo->ImageBase);
 	}
 
 }
@@ -124,14 +175,14 @@ VOID LoadImageNotifyRoutine(_In_ PUNICODE_STRING FullImageName, _In_ HANDLE Proc
 VOID DrvUnload(PDRIVER_OBJECT pDriver)
 {
 	NTSTATUS status;
-	//status  = PsRemoveLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
-	//if (!NT_SUCCESS(status))
-	//{
-	//	DbgPrint("PsRemoveLoadImageNotifyRoutine status = %d", status);
-	//}
+	status  = PsRemoveLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
+	if (!NT_SUCCESS(status))
+	{
+		DbgPrint("PsRemoveLoadImageNotifyRoutine status = %d", status);
+	}
 
-	//移除通知函数
-	PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, TRUE);
+	////移除通知函数
+	//PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, TRUE);
 
 	//关闭event
 	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension;
@@ -196,14 +247,14 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING reg_path)
 	//设置非授信状态
 	KeClearEvent(pDevExt->pEvent);
 
-	//status = PsSetLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
-	//if (!NT_SUCCESS(status))
-	//{
-	//	DbgPrint("PsSetLoadImageNotifyRoutine status = %d", status);
-	//}
+	status = PsSetLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
+	if (!NT_SUCCESS(status))
+	{
+		DbgPrint("PsSetLoadImageNotifyRoutine status = %d", status);
+	}
 
-	//设置回调函数历程
-	status = PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, FALSE);
+	////设置回调函数历程
+	//status = PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, FALSE);
 
 	DbgPrint("驱动加载成功！\n");
 	KdPrint(("驱动加载成功\n"));
