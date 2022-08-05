@@ -161,10 +161,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Driver.hpp" />
+    <ClInclude Include="LoadImageWatch.hpp" />
+    <ClInclude Include="ProcessWatch.hpp" />
     <ClInclude Include="WFPNetworkWatch.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Driver.cpp" />
+    <ClCompile Include="LoadImageWatch.cpp" />
+    <ClCompile Include="ProcessWatch.cpp" />
     <ClCompile Include="WFPNetworkWatch.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

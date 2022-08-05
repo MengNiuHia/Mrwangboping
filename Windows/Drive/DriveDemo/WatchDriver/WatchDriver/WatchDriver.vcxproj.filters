@@ -25,12 +25,24 @@
     <ClInclude Include="WFPNetworkWatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ProcessWatch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadImageWatch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WFPNetworkWatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessWatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadImageWatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
