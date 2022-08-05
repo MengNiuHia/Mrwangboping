@@ -1,5 +1,5 @@
 #include "Driver.hpp"
-
+#include "WFPNetworkWatch.hpp"
 
 HANDLE g_ProcessId = NULL;
 
@@ -175,14 +175,19 @@ VOID LoadImageNotifyRoutine(_In_ PUNICODE_STRING FullImageName, _In_ HANDLE Proc
 VOID DrvUnload(PDRIVER_OBJECT pDriver)
 {
 	NTSTATUS status;
-	status  = PsRemoveLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
-	if (!NT_SUCCESS(status))
-	{
-		DbgPrint("PsRemoveLoadImageNotifyRoutine status = %d", status);
-	}
 
-	////移除通知函数
-	//PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, TRUE);
+	//移除网络监控通知函数
+	status =  WallUnRegisterCallouts();
+
+	//移除镜像加载通知函数
+	//status  = PsRemoveLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
+
+	//移除进程创建通知函数
+	//status = PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, TRUE);
+	//if (!NT_SUCCESS(status))
+	//{
+	//	DbgPrint("PsRemoveLoadImageNotifyRoutine status = %d", status);
+	//}
 
 	//关闭event
 	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)g_pDeviceObject->DeviceExtension;
@@ -224,6 +229,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING reg_path)
 	);
 	if (!NT_SUCCESS(status))
 	{
+		DbgPrint("创建设备对象失败！\n");
 		return status;
 	}
 	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)pDevObj->DeviceExtension;
@@ -247,10 +253,21 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING reg_path)
 	//设置非授信状态
 	KeClearEvent(pDevExt->pEvent);
 
-	status = PsSetLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
+	////设置镜像加载回调函数历程
+	//status = PsSetLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)LoadImageNotifyRoutine);
+	//if (!NT_SUCCESS(status))
+	//{
+	//	DbgPrint("PsSetLoadImageNotifyRoutine status = %d", status);
+	//}
+
+	////设置进程创建回调函数历程
+	//status = PsSetCreateProcessNotifyRoutine(ProcessMonitorCallback, FALSE);
+
+	//设置网络监控回调函数历程
+	status = WallRegisterCallouts();
 	if (!NT_SUCCESS(status))
 	{
-		DbgPrint("PsSetLoadImageNotifyRoutine status = %d", status);
+		DbgPrint("WallRegisterCallouts faild! status = %d", status);
 	}
 
 	////设置回调函数历程
@@ -258,5 +275,6 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING reg_path)
 
 	DbgPrint("驱动加载成功！\n");
 	KdPrint(("驱动加载成功\n"));
-	return status;
+	//return status;
+	return STATUS_SUCCESS;
 }

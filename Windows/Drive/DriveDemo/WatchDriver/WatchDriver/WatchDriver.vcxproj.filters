@@ -22,9 +22,15 @@
     <ClInclude Include="Driver.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WFPNetworkWatch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Driver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WFPNetworkWatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
